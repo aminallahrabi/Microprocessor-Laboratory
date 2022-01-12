@@ -7,9 +7,12 @@
  #include <stdlib.h>
  
 char key= '0';
+char Key;
 float total = 0;
 int state = 0;
+char Buf1[32];
 char Buf[16];
+int Num1=0;
 
 
 int row ;
@@ -34,7 +37,8 @@ char Seven_Segment(char Input_Data){
  case 7: K=0x0E; return K; break;
  case 8: K=0xFE; return K; break;
  case 9: K=0xDE; return K; break;
- default: K=0x00; return K; break;} }
+ default: K=0x00; return K; break;} 
+ }
 char key_pad(){
 
         while(1){
@@ -56,11 +60,10 @@ char key_pad(){
                 if(PINB.7 ==0){
                     col = 3;
                 }
-              
-                
+                  
                 if(col != 5){ 
 
-                 delay_ms(250);    
+                 delay_ms(200);    
                   return keypad[row][col];
                 }   
             }      
@@ -72,7 +75,7 @@ int result(){
                      lcd_gotoxy(0,0);
                      lcd_puts("Total cost :");
                      lcd_gotoxy(0,1);
-                     sprintf(Buf,"%.1f $", total); 
+                     sprintf(Buf ,"%.1f $", total); 
                      lcd_puts(Buf);
                      return 1;
 }
@@ -92,15 +95,14 @@ int checking(){
             return result();                    
      }
      else if(key == 'c'){
-            
              total += price[state];
              Data++;
              if(Data == 10){
                 Data = 0;
                 Data2++;
              }
-                 PORTC=Seven_Segment(Data);
-                 PORTD=Seven_Segment(Data2);
+             PORTC=Seven_Segment(Data);
+             PORTD=Seven_Segment(Data2);
      }
      else if(key == '+'){
         state++;
@@ -133,24 +135,81 @@ int checking(){
     
     
 
-}    
+} 
+int getPass(){
+int digits = 0;
+          
+           while(1){   
+           Key = key_pad();
+           if(Key=='c'){
+            Num1 = 0;
+            digits = 0;
+           } 
+           else if(Num1 == 176){
+                  return 176;
+           }
+           else if(digits < 3){
+           Num1 = Num1 * 10 + Key - 48;  
+           digits++;
+           sprintf(Buf1,"%d",Num1); 
+           lcd_puts(Buf1) ;
+           delay_ms(500);
+           lcd_clear();
+           }
+           else{
+           lcd_puts("Wrong Password");
+           delay_ms(1000);
+            lcd_clear();  
+            lcd_puts("Try again");
+            delay_ms(1000);
+            lcd_clear();
+            Num1 = 0;  
+            digits = 0;   
+              }
+            }           
+} 
+int checkPass(){
+    int Password = 176;
+    int gotPass = 0;
+    lcd_clear();           
+    lcd_gotoxy(0,0);     
+    lcd_puts("Enter Password"); 
+    delay_ms(2000); 
+    lcd_clear();           
+    lcd_gotoxy(0,0); 
+    gotPass = getPass();
+    
+    if(Password == gotPass){
+        return 0;
+    }
+    return  1; 
+}
+
 void main(){
-
-
+int userState = 0;
 DDRB = 0x0F;
 DDRC=0xFF;
 PORTC=0x00;
 DDRD=0xFF;
 PORTD=0x00;
-
  
+
  lcd_init(16);
  lcd_clear();
 PORTC=Seven_Segment(Data); 
  PORTD=Seven_Segment(Data2);
  while(1){
+ if (userState == 0){
+          if(0 == checkPass()){
+                userState++;
+          }
+ }
+if ( userState == 1 ){
  checking();               
  key = key_pad();
+}
  
  }
  }
+
+
